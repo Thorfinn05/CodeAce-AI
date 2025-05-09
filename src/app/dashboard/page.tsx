@@ -2,10 +2,11 @@
 "use client";
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import ProgressTracker from '@/components/tracking/ProgressTracker'; 
-import { ArrowRight, PlayCircle, BarChart3, UserCircle, Bot, Archive, Award, Zap } from 'lucide-react';
+import { ArrowRight, PlayCircle, BarChart3, UserCircle, Bot, Archive, Award, Zap, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { mockProblems } from '@/lib/mock-data';
 import type { Problem } from '@/types';
@@ -19,45 +20,94 @@ const motivationalQuotes = [
   "Algorithm by algorithm, you are architecting the future. - Inspired by S. Wolfram"
 ];
 
+// Placeholder for Code icon if not available in lucide-react, or use a generic one
+const CodeIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <polyline points="16 18 22 12 16 6"></polyline>
+    <polyline points="8 6 2 12 8 18"></polyline>
+  </svg>
+);
+
+
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
+  const { user, firebaseUser, loading, refreshUserData } = useAuth();
+  const router = useRouter();
   const [randomQuote, setRandomQuote] = useState('');
   const [suggestedProblems, setSuggestedProblems] = useState<Problem[]>([]);
   const [recentProblems, setRecentProblems] = useState<Problem[]>([]);
 
   useEffect(() => {
+    if (!loading && !firebaseUser) {
+      router.push('/auth/signin');
+    }
+  }, [loading, firebaseUser, router]);
+
+  useEffect(() => {
     setRandomQuote(motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]);
-    if (user) {
+    if (user) { // Check if user (Firestore data) is available
       const shuffled = [...mockProblems].sort(() => 0.5 - Math.random());
       setSuggestedProblems(shuffled.slice(0, 3));
       
-      if (user.progress?.lastProblemId) {
-        const lastProblem = mockProblems.find(p => p.id === user.progress.lastProblemId);
+      const lastProblemId = user.progress?.lastProblemId;
+      const solvedProblemsMap = user.progress?.solvedProblems;
+
+      if (lastProblemId) {
+        const lastProblem = mockProblems.find(p => p.id === lastProblemId);
         if (lastProblem) setRecentProblems([lastProblem]);
-      } else if (user.progress?.solvedProblems && Object.keys(user.progress.solvedProblems).length > 0) {
-         const solvedIds = Object.keys(user.progress.solvedProblems);
-         const recent = mockProblems.filter(p => solvedIds.includes(p.id)).slice(0,2);
+      } else if (solvedProblemsMap && Object.keys(solvedProblemsMap).length > 0) {
+         const solvedIds = Object.keys(solvedProblemsMap);
+         const recent = mockProblems.filter(p => solvedIds.includes(p.id))
+                          .sort((a,b) => {
+                            const dateA = solvedProblemsMap[a.id];
+                            const dateB = solvedProblemsMap[b.id];
+                            // Ensure dates are actual Date objects or Timestamps
+                            const timeA = (dateA instanceof Date ? dateA : (dateA as any)?.toDate?.())?.getTime() || 0;
+                            const timeB = (dateB instanceof Date ? dateB : (dateB as any)?.toDate?.())?.getTime() || 0;
+                            return timeB - timeA; // Sort by most recent
+                          })
+                          .slice(0,2);
          setRecentProblems(recent);
       }
+    } else {
+        // Reset if user data is not available (e.g., after logout)
+        setSuggestedProblems([]);
+        setRecentProblems([]);
     }
-  }, [user]);
+  }, [user]); // Depend on user (Firestore data)
   
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-        <Zap className="h-16 w-16 text-accent animate-pulse" /> 
-        <span className="ml-4 text-xl font-semibold">Loading Dashboard...</span>
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
+        <Loader2 className="h-16 w-16 text-accent animate-spin mb-4" /> 
+        <span className="text-xl font-semibold text-muted-foreground">Loading Dashboard...</span>
       </div>
     );
   }
 
-  if (!user) {
+  if (!firebaseUser) {
+    // This state should be brief as useEffect will redirect.
     return (
-      <div className="text-center p-8">
-        Redirecting to login...
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
+        <Zap className="h-16 w-16 text-primary mb-4" />
+        <p className="text-xl font-semibold text-muted-foreground">Redirecting to sign-in...</p>
       </div>
     );
   }
+  
+  if (!user) {
+    // Firebase user is authenticated, but Firestore user data is not loaded.
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] text-center">
+        <AlertCircle className="h-16 w-16 text-destructive mb-4" />
+        <h2 className="text-2xl font-bold mb-2">Error Loading Profile</h2>
+        <p className="text-muted-foreground mb-4">We couldn't load your profile data. This might be a temporary issue.</p>
+        <Button onClick={async () => { await refreshUserData(); router.refresh(); }} className="bg-accent hover:bg-accent/80">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin hidden" /> Try Again
+        </Button>
+         <p className="text-sm text-muted-foreground mt-6">If the problem persists, please <Link href="/auth/signout" className="underline hover:text-accent">sign out</Link> and sign in again.</p>
+      </div>
+    );
+  }; // Added semicolon here
 
   return (
     <div className="space-y-8">
@@ -113,7 +163,7 @@ export default function DashboardPage() {
         <h2 className="text-2xl font-semibold mb-6 text-foreground font-poppins">Explore CodeAce</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
-            { title: "Practice Arena", icon: Code, href: "/practice", desc: "Hone skills with diverse problems." },
+            { title: "Practice Arena", icon: CodeIcon, href: "/practice", desc: "Hone skills with diverse problems." },
             { title: "AI Code Coach", icon: Bot, href: "/code-review", desc: "Get AI insights on your code." },
             { title: "Learning Roadmap", icon: BarChart3, href: "/roadmap", desc: "Track your mastery journey." },
             { title: "Snippet Library", icon: Archive, href: "/snippets", desc: "Your personal code vault." },
@@ -156,7 +206,7 @@ export default function DashboardPage() {
                     }`}>
                       {problem.difficulty}
                     </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-muted text-muted-foreground border-border">
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-muted text-muted-foreground border">
                       {problem.topic}
                     </span>
                   </div>
