@@ -8,24 +8,50 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LogIn, Mail, KeyRound, ExternalLink } from 'lucide-react';
-import { signInWithGoogle } from '@/lib/firebase/auth';
+import { signInWithGoogle, signInWithEmailAndPassword } from '@/lib/firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+import React, { useState } from 'react';
 
 export default function SignInPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignIn = (event: React.FormEvent) => {
+
+  const handleSignIn = async (event: React.FormEvent) => {
     event.preventDefault();
-    // TODO: Implement Firebase email/password sign in
-    toast({
-      title: "Sign In (Email/Password)",
-      description: "Email/Password sign in is not yet implemented.",
-      variant: "default"
-    });
+    setIsLoading(true);
+    try {
+      const user = await signInWithEmailAndPassword(email, password);
+      if (user) {
+        toast({
+          title: "Sign In Successful",
+          description: `Welcome back, ${user.displayName || user.email}!`,
+        });
+        router.push('/dashboard');
+      }
+    } catch (error: any) {
+      console.error("Email/Password Sign-In Error:", error);
+      let errorMessage = "An unexpected error occurred during sign-in.";
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        errorMessage = "Invalid email or password. Please try again.";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "The email address is not valid.";
+      }
+      toast({
+        title: "Sign In Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleSignIn = async () => {
+    setIsLoading(true);
     try {
       const user = await signInWithGoogle();
       if (user) {
@@ -33,15 +59,27 @@ export default function SignInPage() {
           title: "Sign In Successful",
           description: `Welcome back, ${user.displayName || user.email}!`,
         });
-        router.push('/dashboard'); // Redirect to dashboard or desired page
+        router.push('/dashboard'); 
       }
-    } catch (error: any) {
+    } catch (error: any)
+     {
       console.error("Google Sign-In Error:", error);
+      let description = "An unexpected error occurred during Google Sign-In.";
+      if (error.code === 'auth/popup-closed-by-user') {
+        description = "Google Sign-In popup was closed before completing. Please try again.";
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        description = "Google Sign-In was cancelled. Please try again if this was a mistake."
+      } else if (error.message) {
+        description = error.message;
+      }
+      
       toast({
         title: "Sign In Failed",
-        description: error.message || "An unexpected error occurred during Google Sign-In.",
+        description: description,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -61,27 +99,35 @@ export default function SignInPage() {
               <Label htmlFor="email" className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-muted-foreground" /> Email
               </Label>
-              <Input id="email" type="email" placeholder="you@example.com" required 
-                     className="rounded-lg"/>
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="you@example.com" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
+                className="rounded-lg"/>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password" className="flex items-center gap-2">
                 <KeyRound className="h-4 w-4 text-muted-foreground" /> Password
               </Label>
-              <Input id="password" type="password" placeholder="••••••••" required 
-                     className="rounded-lg"/>
+              <Input 
+                id="password" 
+                type="password" 
+                placeholder="••••••••" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required 
+                className="rounded-lg"/>
             </div>
             <div className="flex items-center justify-between text-sm">
-              {/* <div className="flex items-center space-x-2">
-                <Checkbox id="remember-me" />
-                <Label htmlFor="remember-me" className="font-normal">Remember me</Label>
-              </div> */}
               <Link href="#" className="font-medium text-primary hover:underline">
                 Forgot password?
               </Link>
             </div>
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg py-3 text-base">
-              Sign In
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg py-3 text-base" disabled={isLoading}>
+              {isLoading && !email && !password ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
           <div className="relative my-6">
@@ -92,7 +138,7 @@ export default function SignInPage() {
               <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
             </div>
           </div>
-          <Button variant="outline" className="w-full rounded-lg py-3 text-base flex items-center gap-2" onClick={handleGoogleSignIn}>
+          <Button variant="outline" className="w-full rounded-lg py-3 text-base flex items-center gap-2" onClick={handleGoogleSignIn} disabled={isLoading}>
             <svg className="mr-2 -ml-1 w-4 h-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path></svg>
             Google
           </Button>

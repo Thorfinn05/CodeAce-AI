@@ -6,6 +6,9 @@ import {
   signOut,
   type User,
   onAuthStateChanged as onFirebaseAuthStateChanged, // Renamed to avoid conflict
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signInWithEmailAndPassword as firebaseSignInWithEmailAndPassword,
 } from "firebase/auth";
 import { app } from "./config"; // Ensure your firebase app config is correctly imported
 
@@ -15,21 +18,33 @@ const provider = new GoogleAuthProvider();
 export const signInWithGoogle = async (): Promise<User | null> => {
   try {
     const result = await signInWithPopup(auth, provider);
-    // This gives you a Google Access Token. You can use it to access the Google API.
-    // const credential = GoogleAuthProvider.credentialFromResult(result);
-    // const token = credential?.accessToken;
-    // The signed-in user info.
     return result.user;
   } catch (error: any) {
-    // Handle Errors here.
-    // const errorCode = error.code;
-    // const errorMessage = error.message;
-    // The email of the user's account used.
-    // const email = error.customData?.email;
-    // The AuthCredential type that was used.
-    // const credential = GoogleAuthProvider.credentialFromError(error);
     console.error("Google Sign-In Error:", error);
     throw error; // Re-throw the error to be caught by the caller
+  }
+};
+
+export const signUpWithEmailAndPassword = async (email: string, password: string, displayName?: string): Promise<User | null> => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    if (userCredential.user && displayName) {
+      await updateProfile(userCredential.user, { displayName });
+    }
+    return userCredential.user;
+  } catch (error: any) {
+    console.error("Email/Password Sign-Up Error:", error);
+    throw error;
+  }
+};
+
+export const signInWithEmailAndPassword = async (email: string, password: string): Promise<User | null> => {
+  try {
+    const userCredential = await firebaseSignInWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
+  } catch (error: any) {
+    console.error("Email/Password Sign-In Error:", error);
+    throw error;
   }
 };
 
