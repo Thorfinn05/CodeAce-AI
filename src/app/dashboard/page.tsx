@@ -1,12 +1,14 @@
+
 "use client";
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import ProgressTracker from '@/components/tracking/ProgressTracker'; // Re-using existing component
 import { Lightbulb, BookOpen, Users, Code, PlayCircle, BarChart3, UserCircle } from 'lucide-react';
 import { mockProblems } from '@/lib/mock-data'; // For suggested problems
 import type { Problem } from '@/types';
+import { useEffect, useState } from 'react';
 
 // Mock data, replace with actual user data later
 const userName = "Alex Coder"; 
@@ -18,20 +20,27 @@ const motivationalQuotes = [
 ];
 
 export default function DashboardPage() {
+  const [randomQuote, setRandomQuote] = useState('');
+
+  useEffect(() => {
+    setRandomQuote(motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]);
+  }, []);
+
   // In a real app, fetch suggested problems based on user progress/AI
   const suggestedProblems: Problem[] = mockProblems.slice(0, 3); 
-  const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
-
+  
   return (
     <div className="space-y-8">
       <Card className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-xl rounded-2xl p-6 md:p-8">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold">Welcome back, {userName}!</h1>
-            <p className="text-lg opacity-90 mt-2 flex items-center">
-              <Lightbulb className="h-5 w-5 mr-2 text-yellow-300" /> 
-              <em>{randomQuote}</em>
-            </p>
+            {randomQuote && (
+              <p className="text-lg opacity-90 mt-2 flex items-center">
+                <Lightbulb className="h-5 w-5 mr-2 text-yellow-300" /> 
+                <em>{randomQuote}</em>
+              </p>
+            )}
           </div>
           <Button size="lg" className="mt-4 md:mt-0 bg-accent hover:bg-accent/90 text-accent-foreground" asChild>
             <Link href="/practice">
@@ -128,3 +137,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
