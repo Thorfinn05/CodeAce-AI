@@ -1,22 +1,48 @@
+
 "use client";
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UserPlus, Mail, KeyRound, User, ExternalLink } from 'lucide-react'; // Replaced Lock with KeyRound
+import { UserPlus, Mail, KeyRound, User, ExternalLink } from 'lucide-react';
+import { signInWithGoogle } from '@/lib/firebase/auth';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SignUpPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+
   const handleSignUp = (event: React.FormEvent) => {
     event.preventDefault();
     // TODO: Implement Firebase email/password sign up
-    alert("Sign up functionality to be implemented with Firebase.");
+     toast({
+      title: "Sign Up (Email/Password)",
+      description: "Email/Password sign up is not yet implemented.",
+      variant: "default"
+    });
   };
 
-  const handleGoogleSignUp = () => {
-    // TODO: Implement Firebase Google sign up
-    alert("Google Sign up functionality to be implemented with Firebase.");
+  const handleGoogleSignUp = async () => {
+    try {
+      const user = await signInWithGoogle(); // Google sign-in can also be used for sign-up
+      if (user) {
+        toast({
+          title: "Sign Up Successful",
+          description: `Welcome, ${user.displayName || user.email}! Your account has been created.`,
+        });
+        router.push('/dashboard'); // Redirect to dashboard or desired page
+      }
+    } catch (error: any) {
+      console.error("Google Sign-Up Error:", error);
+      toast({
+        title: "Sign Up Failed",
+        description: error.message || "An unexpected error occurred during Google Sign-Up.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
