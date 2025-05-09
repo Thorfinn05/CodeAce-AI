@@ -1,14 +1,15 @@
+
 "use client";
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import ProgressTracker from '@/components/tracking/ProgressTracker'; 
-import { ArrowRight, BookOpen, Code, PlayCircle, BarChart3, UserCircle, Bot, Archive, Award, Zap } from 'lucide-react';
+import { ArrowRight, PlayCircle, BarChart3, UserCircle, Bot, Archive, Award, Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { mockProblems } from '@/lib/mock-data'; // For suggested problems, will be dynamic later
+import { mockProblems } from '@/lib/mock-data';
 import type { Problem } from '@/types';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 
 const motivationalQuotes = [
@@ -22,21 +23,18 @@ export default function DashboardPage() {
   const { user, loading } = useAuth();
   const [randomQuote, setRandomQuote] = useState('');
   const [suggestedProblems, setSuggestedProblems] = useState<Problem[]>([]);
-  const [recentProblems, setRecentProblems] = useState<Problem[]>([]); // Placeholder
+  const [recentProblems, setRecentProblems] = useState<Problem[]>([]);
 
   useEffect(() => {
     setRandomQuote(motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]);
-    // Placeholder for fetching suggested and recent problems based on user.progress
     if (user) {
-      // Example: Fetch 3 random problems as suggestions
       const shuffled = [...mockProblems].sort(() => 0.5 - Math.random());
       setSuggestedProblems(shuffled.slice(0, 3));
-      // Example: Fetch last 2 solved problems (if IDs stored in user.progress.solvedProblems)
-      // For now, just mock it if user.progress.lastProblemId or solvedProblems array is available
+      
       if (user.progress?.lastProblemId) {
         const lastProblem = mockProblems.find(p => p.id === user.progress.lastProblemId);
         if (lastProblem) setRecentProblems([lastProblem]);
-      } else if(user.progress?.solvedProblems && Object.keys(user.progress.solvedProblems).length > 0) {
+      } else if (user.progress?.solvedProblems && Object.keys(user.progress.solvedProblems).length > 0) {
          const solvedIds = Object.keys(user.progress.solvedProblems);
          const recent = mockProblems.filter(p => solvedIds.includes(p.id)).slice(0,2);
          setRecentProblems(recent);
@@ -45,12 +43,20 @@ export default function DashboardPage() {
   }, [user]);
   
   if (loading) {
-    return <div className="flex items-center justify-center min-h-[calc(100vh-200px)]"><Zap className="h-16 w-16 text-accent animate-pulse" /> <span className="ml-4 text-xl font-semibold">Loading Dashboard...</span></div>;
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+        <Zap className="h-16 w-16 text-accent animate-pulse" /> 
+        <span className="ml-4 text-xl font-semibold">Loading Dashboard...</span>
+      </div>
+    );
   }
 
   if (!user) {
-     // This should ideally be handled by a protected route wrapper
-    return <div className="text-center p-8">Redirecting to login...</div>;
+    return (
+      <div className="text-center p-8">
+        Redirecting to login...
+      </div>
+    );
   }
 
   return (
@@ -77,7 +83,6 @@ export default function DashboardPage() {
         </div>
       </Card>
 
-      {/* Real-time user data component - This should fetch from Firestore via useAuth or a dedicated hook */}
       <ProgressTracker userData={user} />
 
       {recentProblems.length > 0 && (
@@ -117,8 +122,10 @@ export default function DashboardPage() {
           ].map(item => (
             <Card key={item.title} className="shadow-lg hover:shadow-2xl transition-shadow duration-300 rounded-2xl glassmorphic group hover:border-accent/50">
               <CardHeader className="items-center text-center">
-                <div className="p-3 bg-accent/10 rounded-full mb-3 group-hover:scale-110 transition-transform">{React.createElement(item.icon, { className: "h-8 w-8 text-accent" })}</div>
-                <CardTitle className="font-poppins text-xl">{item.title}</CardHeader>
+                <div className="p-3 bg-accent/10 rounded-full mb-3 group-hover:scale-110 transition-transform">
+                  {React.createElement(item.icon, { className: "h-8 w-8 text-accent" })}
+                </div>
+                <CardTitle className="font-poppins text-xl">{item.title}</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
                 <CardDescription>{item.desc}</CardDescription>
