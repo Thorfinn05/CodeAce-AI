@@ -1,10 +1,10 @@
 "use client";
 
 import type { Problem } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Removed CardDescription
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ListFilter, Search } from 'lucide-react';
+import { ListFilter, Search, CodeXml } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -44,25 +44,27 @@ export default function ProblemList({
   difficulties,
 }: ProblemListProps) {
   return (
-    <div className="h-full flex flex-col overflow-hidden"> {/* Removed Card component from here to use full height of parent Card */}
-      <CardHeader className="bg-card-foreground/5 p-4 border-b rounded-t-2xl"> {/* Apply rounding here if this is the top */}
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-semibold text-foreground">Coding Problems</CardTitle>
-          <ListFilter className="h-5 w-5 text-muted-foreground" />
+    <div className="h-full flex flex-col overflow-hidden bg-card/30 backdrop-blur-sm rounded-2xl border border-primary/10">
+      <CardHeader className="bg-primary/5 p-4 border-b border-primary/10">
+        <div className="flex items-center justify-between mb-4">
+          <CardTitle className="text-2xl font-semibold text-foreground font-poppins flex items-center gap-2">
+            <CodeXml className="h-7 w-7 text-accent"/> Problem Arena
+          </CardTitle>
+          <ListFilter className="h-6 w-6 text-muted-foreground" />
         </div>
-        <div className="mt-4 space-y-3">
+        <div className="space-y-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input 
               placeholder="Search problems by title or keyword..." 
-              className="pl-10 w-full rounded-lg"
+              className="pl-12 w-full rounded-lg bg-background/70 h-11 text-base"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-              <SelectTrigger className="w-full rounded-lg">
+              <SelectTrigger className="w-full rounded-lg bg-background/70 h-11 text-base">
                 <SelectValue placeholder="Difficulty" />
               </SelectTrigger>
               <SelectContent>
@@ -71,7 +73,7 @@ export default function ProblemList({
               </SelectContent>
             </Select>
             <Select value={topicFilter} onValueChange={setTopicFilter}>
-              <SelectTrigger className="w-full rounded-lg">
+              <SelectTrigger className="w-full rounded-lg bg-background/70 h-11 text-base">
                 <SelectValue placeholder="Topic" />
               </SelectTrigger>
               <SelectContent>
@@ -82,31 +84,32 @@ export default function ProblemList({
           </div>
         </div>
       </CardHeader>
-      <ScrollArea className="flex-grow"> {/* ScrollArea for the list items */}
+      <ScrollArea className="flex-grow">
         <CardContent className="p-0">
           {problems.length === 0 ? (
-            <div className="p-6 text-center text-muted-foreground">
-              <p>No problems match your filters.</p>
-              <p className="text-sm">Try adjusting your search or filter criteria.</p>
+            <div className="p-8 text-center text-muted-foreground">
+              <p className="text-lg mb-1">No problems match your criteria.</p>
+              <p className="text-sm">Try adjusting your search or filters.</p>
             </div>
           ) : (
-          <ul className="divide-y divide-border">
+          <ul className="divide-y divide-primary/10">
             {problems.map((problem) => (
               <li key={problem.id}>
                 <Button
                   variant="ghost"
-                  className={`w-full h-auto justify-start text-left p-4 rounded-none hover:bg-accent/10 ${selectedProblemId === problem.id ? 'bg-accent/20 text-accent-foreground' : ''}`}
+                  className={`w-full h-auto justify-start text-left p-4 rounded-none transition-all duration-200 ease-in-out
+                              hover:bg-accent/10 
+                              ${selectedProblemId === problem.id ? 'bg-accent/20 text-accent-foreground border-l-4 border-accent' : 'hover:text-accent-foreground'}`}
                   onClick={() => onSelectProblem(problem)}
                 >
                   <div className="w-full">
                     <div className="flex justify-between items-center mb-1">
-                      <h3 className={`font-medium ${selectedProblemId === problem.id ? 'text-accent-foreground': 'text-foreground'}`}>{problem.title}</h3>
+                      <h3 className={`font-medium text-lg ${selectedProblemId === problem.id ? 'text-accent-foreground': 'text-foreground'}`}>{problem.title}</h3>
                       <Badge 
-                        variant={problem.difficulty === 'Easy' ? 'default' : problem.difficulty === 'Medium' ? 'secondary' : 'destructive'}
-                        className={`text-xs ${
-                          problem.difficulty === 'Easy' ? 'bg-green-500/20 text-green-700 border-green-500/30 dark:bg-green-700/30 dark:text-green-200 dark:border-green-700/40' :
-                          problem.difficulty === 'Medium' ? 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30 dark:bg-yellow-700/30 dark:text-yellow-200 dark:border-yellow-700/40' :
-                          'bg-red-500/20 text-red-700 border-red-500/30 dark:bg-red-700/30 dark:text-red-200 dark:border-red-700/40'
+                        className={`text-xs font-medium border ${
+                          problem.difficulty === 'Easy' ? 'bg-green-500/10 text-green-600 border-green-500/30' :
+                          problem.difficulty === 'Medium' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30' :
+                          'bg-red-500/10 text-red-600 border-red-500/30'
                         }`}
                       >
                         {problem.difficulty}

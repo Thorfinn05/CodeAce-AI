@@ -1,120 +1,145 @@
 "use client";
 
-import { Award, BarChart2, CalendarDays, Filter, Trophy } from "lucide-react";
+import { Award, BarChart2, Users, Filter, Trophy, ShieldCheck, Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Image from "next/image";
+import { useAuth } from "@/hooks/use-auth"; // To identify current user
+import { useState, useEffect } from "react";
+import type { UserData } from "@/types"; // Assuming UserData has progress.xp and displayName
 
-// Mock data for leaderboard - replace with actual data
-const mockLeaderboardData = [
-  { rank: 1, name: "SyntaxSorcerer", xp: 10250, problemsSolved: 150, avatar: "https://picsum.photos/id/237/40/40", dataAiHint: "dog puppy" },
-  { rank: 2, name: "AlgoQueen", xp: 9870, problemsSolved: 145, avatar: "https://picsum.photos/id/1025/40/40", dataAiHint: "woman developer" },
-  { rank: 3, name: "CodeNinjaX", xp: 9500, problemsSolved: 130, avatar: "https://picsum.photos/id/1012/40/40", dataAiHint: "man coder" },
-  { rank: 4, name: "RecursiveRaccoon", xp: 8800, problemsSolved: 120, avatar: "https://picsum.photos/id/1020/40/40", dataAiHint: "animal raccoon" },
-  { rank: 5, name: "Alex Coder", xp: 8500, problemsSolved: 115, avatar: "https://picsum.photos/id/1005/40/40", dataAiHint: "student person", isCurrentUser: true },
-  { rank: 6, name: "DebugDiva", xp: 7900, problemsSolved: 110, avatar: "https://picsum.photos/id/1011/40/40", dataAiHint: "woman portrait" },
-  { rank: 7, name: "PythonProdigy", xp: 7500, problemsSolved: 105, avatar: "https://picsum.photos/id/1013/40/40", dataAiHint: "man glasses" },
-  { rank: 8, name: "JavaJuggernaut", xp: 7200, problemsSolved: 100, avatar: "https://picsum.photos/id/1014/40/40", dataAiHint: "person thinking" },
-  { rank: 9, name: "ScriptKiddo", xp: 6800, problemsSolved: 95, avatar: "https://picsum.photos/id/1015/40/40", dataAiHint: "young person" },
-  { rank: 10, name: "LogicLlama", xp: 6500, problemsSolved: 90, avatar: "https://picsum.photos/id/1022/40/40", dataAiHint: "animal llama" },
+// Mock data, will be replaced by Firestore fetch
+interface LeaderboardUser extends Partial<UserData> {
+  rank: number;
+  avatarPlaceholder?: string; // For picsum
+  dataAiHint?: string;
+}
+
+const mockLeaderboardData: LeaderboardUser[] = [
+  { rank: 1, displayName: "SyntaxSorcerer", progress: { xp: 10250 } as any, avatarPlaceholder: "id/237", dataAiHint: "wizard coder" },
+  { rank: 2, displayName: "AlgoQueen", progress: { xp: 9870 } as any, avatarPlaceholder: "id/1025", dataAiHint: "queen chess" },
+  { rank: 3, displayName: "CodeNinjaX", progress: { xp: 9500 } as any, avatarPlaceholder: "id/1012", dataAiHint: "ninja warrior" },
+  { rank: 4, displayName: "RecursiveRaccoon", progress: { xp: 8800 } as any, avatarPlaceholder: "id/1020", dataAiHint: "smart raccoon" },
+  { rank: 5, displayName: "Alex Coder", uid: "currentUserPlaceholder", progress: { xp: 8500 } as any, avatarPlaceholder: "id/1005", dataAiHint: "focused student" }, // Mark current user
+  { rank: 6, displayName: "DebugDiva", progress: { xp: 7900 } as any, avatarPlaceholder: "id/1011", dataAiHint: "elegant programmer" },
+  { rank: 7, displayName: "PythonProdigy", progress: { xp: 7500 } as any, avatarPlaceholder: "id/1013", dataAiHint: "genius developer" },
 ];
 
 
 export default function LeaderboardPage() {
-  // State for filters - to be implemented
-  // const [timeFilter, setTimeFilter] = useState("all-time");
-  // const [categoryFilter, setCategoryFilter] = useState("xp");
+  const { user } = useAuth(); // Get current logged-in user
+  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
+  const [timeFilter, setTimeFilter] = useState("global"); // global, weekly
+  const [categoryFilter, setCategoryFilter] = useState("xp"); // xp, topic (topic for future)
+
+  useEffect(() => {
+    // Placeholder for fetching leaderboard data from Firestore
+    // This would query users collection, order by progress.xp, etc.
+    // And apply time/category filters.
+    const dataWithCurrentUser = mockLeaderboardData.map(u => ({
+      ...u,
+      isCurrentUser: user ? (u.uid === user.uid || (u.uid === "currentUserPlaceholder" && user.displayName === u.displayName)) : false // Basic current user check
+    })).sort((a,b) => (b.progress?.xp || 0) - (a.progress?.xp || 0))
+       .map((u, index) => ({...u, rank: index + 1})); // Re-rank after sort
+    
+    setLeaderboard(dataWithCurrentUser);
+  }, [user, timeFilter, categoryFilter]);
+
+  // Animated rank-up effect (placeholder logic)
+  // In a real app, this would compare old rank with new rank after data fetch.
 
   return (
     <div className="space-y-8">
-      <Card className="shadow-xl rounded-2xl overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-primary to-accent p-0">
-           <Image src="https://picsum.photos/seed/leaderboard/1200/250" alt="Leaderboard banner" width={1200} height={250} className="object-cover w-full h-full opacity-70" data-ai-hint="abstract competition" />
-           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-black/30">
-            <Trophy className="h-16 w-16 text-yellow-300 mb-4" />
-            <CardTitle className="text-4xl font-bold text-white">Leaderboard</CardTitle>
-            <CardDescription className="text-lg text-gray-200 mt-2">
-              See who's topping the charts in coding mastery!
+      <Card className="shadow-2xl rounded-2xl overflow-hidden glassmorphic border-primary/20">
+        <CardHeader className="p-0 relative">
+           <Image src="https://picsum.photos/seed/leaderboard-arena/1200/300" alt="Leaderboard Arena Banner" width={1200} height={300} className="object-cover w-full h-full opacity-50" data-ai-hint="digital competition arena" />
+           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col items-center justify-center text-center p-6">
+            <Trophy className="h-20 w-20 text-yellow-300 mb-4 filter drop-shadow-[0_0_8px_#fde047]" />
+            <CardTitle className="text-5xl font-bold text-white font-poppins filter drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]">Leaderboard</CardTitle>
+            <CardDescription className="text-xl text-slate-200 mt-2">
+              Ascend the ranks. Showcase your coding prowess.
             </CardDescription>
           </div>
         </CardHeader>
          <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center mb-6 pb-6 border-b border-primary/10">
             <div className="flex gap-2 items-center">
-              <BarChart2 className="h-5 w-5 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Showing top coders based on XP.</p>
+              <BarChart2 className="h-6 w-6 text-accent" />
+              <p className="text-md text-muted-foreground">Top coders by {categoryFilter === 'xp' ? 'Experience Points' : 'Category Mastery'}. Filter by period.</p>
             </div>
-            <div className="flex gap-2">
-              <Select defaultValue="all-time" onValueChange={(value) => console.log("Time filter:", value)}>
-                <SelectTrigger className="w-[150px] rounded-lg">
+            <div className="flex gap-3">
+              <Select value={timeFilter} onValueChange={setTimeFilter}>
+                <SelectTrigger className="w-[160px] rounded-lg bg-background/70">
                   <SelectValue placeholder="Time Period" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all-time">All Time</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="global">Global (All Time)</SelectItem>
+                  <SelectItem value="weekly">Weekly (Soon)</SelectItem>
                 </SelectContent>
               </Select>
-              <Select defaultValue="xp" onValueChange={(value) => console.log("Category filter:", value)}>
-                <SelectTrigger className="w-[150px] rounded-lg">
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[160px] rounded-lg bg-background/70">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="xp">XP Earned</SelectItem>
-                  <SelectItem value="mastery">Topic Mastery</SelectItem>
-                  <SelectItem value="solved">Problems Solved</SelectItem>
+                  <SelectItem value="topic" disabled>Topic Mastery (Soon)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <Table>
+          <Table className="mt-4">
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-[80px]">Rank</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead className="text-right">XP</TableHead>
-                <TableHead className="text-right hidden sm:table-cell">Problems Solved</TableHead>
+              <TableRow className="border-b-primary/20">
+                <TableHead className="w-[80px] text-lg font-poppins">Rank</TableHead>
+                <TableHead className="text-lg font-poppins">User</TableHead>
+                <TableHead className="text-right text-lg font-poppins">XP</TableHead>
+                <TableHead className="text-right hidden sm:table-cell text-lg font-poppins">Badges (Soon)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockLeaderboardData.map((user) => (
-                <TableRow key={user.rank} className={user.isCurrentUser ? "bg-accent/10" : ""}>
-                  <TableCell className="font-medium text-lg">
-                    {user.rank <= 3 ? (
-                      <Award className={`inline-block h-6 w-6 ${
-                        user.rank === 1 ? 'text-yellow-500' : 
-                        user.rank === 2 ? 'text-gray-400' : 
+              {leaderboard.map((u) => (
+                <TableRow key={u.rank} className={`transition-all duration-300 hover:bg-primary/5 ${u.isCurrentUser ? "bg-accent/10 scale-[1.01] shadow-lg border-l-4 border-accent" : "border-b-primary/5"}`}>
+                  <TableCell className="font-bold text-2xl text-primary">
+                    {u.rank <= 3 ? (
+                      <Award className={`inline-block h-8 w-8 filter drop-shadow-[0_0_3px_currentColor] ${
+                        u.rank === 1 ? 'text-yellow-400' : 
+                        u.rank === 2 ? 'text-slate-400' : 
                         'text-orange-400'
                       }`} />
-                    ) : user.rank}
+                    ) : u.rank}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={user.avatar} alt={user.name} data-ai-hint={user.dataAiHint} />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-12 w-12 border-2 border-primary/30">
+                        <AvatarImage src={u.photoURL || `https://picsum.photos/seed/${u.displayName}/${u.avatarPlaceholder || 'generic'}/48/48`} alt={u.displayName || 'User'} data-ai-hint={u.dataAiHint || "coding user"}/>
+                        <AvatarFallback className="font-poppins">{(u.displayName || "U").charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium text-foreground">{user.name} {user.isCurrentUser && "(You)"}</p>
-                        {/* Could add a small badge for streak or something */}
+                        <p className={`font-semibold text-lg ${u.isCurrentUser ? 'text-accent font-bold' : 'text-foreground'}`}>{u.displayName} {u.isCurrentUser && "(You)"}</p>
+                        {/* Placeholder for streak or top badge */}
+                         {u.rank === 1 && <Badge variant="outline" className="border-yellow-400 text-yellow-500 text-xs mt-1"><Star className="h-3 w-3 mr-1"/>Top Coder</Badge>}
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right font-semibold text-primary">{user.xp.toLocaleString()}</TableCell>
-                  <TableCell className="text-right text-muted-foreground hidden sm:table-cell">{user.problemsSolved}</TableCell>
+                  <TableCell className="text-right font-bold text-xl text-accent">{u.progress?.xp?.toLocaleString() || 0}</TableCell>
+                  <TableCell className="text-right text-muted-foreground hidden sm:table-cell">
+                    {/* Placeholder for badges count or icons */}
+                    <ShieldCheck className="h-5 w-5 inline-block text-green-400 opacity-70"/>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+           {leaderboard.length === 0 && <p className="text-center py-8 text-muted-foreground">Leaderboard is currently empty or data is loading.</p>}
         </CardContent>
       </Card>
        <p className="text-center text-sm text-muted-foreground">
-        Leaderboard is for illustrative purposes. Keep practicing to climb the ranks!
+        Leaderboard data is illustrative. Real-time updates and filters coming soon!
       </p>
     </div>
   );

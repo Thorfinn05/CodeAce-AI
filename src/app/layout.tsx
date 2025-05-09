@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
-import { JetBrains_Mono as JetBrainsMono } from 'next/font/google';
+import { JetBrains_Mono as JetBrainsMono, Poppins } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import AppProviders from '@/components/layout/AppProviders';
@@ -14,9 +14,15 @@ const jetbrainsMono = JetBrainsMono({
   weight: ['400', '700'], 
 });
 
+const poppins = Poppins({
+  variable: '--font-poppins',
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+});
+
 export const metadata: Metadata = {
-  title: 'CodeCoach – AI-Powered Programming Mentor',
-  description: 'Write, test, and improve code with AI guidance. Track your programming progress and master new concepts with CodeCoach.',
+  title: 'CodeAce – Your AI Coding Coach',
+  description: 'Code. Learn. Level Up. Practice coding, get AI feedback, track your roadmap, and conquer challenges with CodeAce, your AI-powered programming mentor.',
 };
 
 export default function RootLayout({
@@ -26,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${GeistSans.variable} ${GeistMono.variable} ${jetbrainsMono.variable} antialiased min-h-screen flex flex-col bg-background text-foreground`}>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} ${jetbrainsMono.variable} ${poppins.variable} font-sans antialiased min-h-screen flex flex-col bg-background text-foreground`}>
         <AppProviders>
           <AppHeader />
           <main className="flex-grow container mx-auto px-4 py-6">
