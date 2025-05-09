@@ -127,7 +127,7 @@ export default function SignInPage() {
               </Link>
             </div>
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg py-3 text-base" disabled={isLoading}>
-              {isLoading && !email && !password ? 'Signing In...' : 'Sign In'}
+              {isLoading && (email || password) ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
           <div className="relative my-6">

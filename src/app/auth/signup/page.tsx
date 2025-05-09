@@ -65,9 +65,17 @@ export default function SignUpPage() {
       }
     } catch (error: any) {
       console.error("Google Sign-Up Error:", error);
+      let description = "An unexpected error occurred during Google Sign-Up.";
+      if (error.code === 'auth/popup-closed-by-user') {
+        description = "Google Sign-Up popup was closed before completing. Please try again.";
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        description = "Google Sign-Up was cancelled. Please try again if this was a mistake."
+      } else if (error.message) {
+        description = error.message;
+      }
       toast({
         title: "Sign Up Failed",
-        description: error.message || "An unexpected error occurred during Google Sign-Up.",
+        description: description,
         variant: "destructive",
       });
     } finally {
@@ -128,7 +136,7 @@ export default function SignUpPage() {
                 className="rounded-lg"/>
             </div>
             <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg py-3 text-base" disabled={isLoading}>
-              {isLoading ? 'Signing Up...' : 'Sign Up'}
+              {isLoading && (email || password || name) ? 'Signing Up...' : 'Sign Up'}
             </Button>
           </form>
           <div className="relative my-6">
