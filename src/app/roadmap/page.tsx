@@ -1,8 +1,9 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Lock, Zap, ArrowRight, MapChart, Brain, Star } from 'lucide-react';
+import { CheckCircle, Lock, Zap, ArrowRight, Map, Brain, Star, Sparkles } from 'lucide-react'; // Changed MapChart to Map, Sparkles for recommendations
 import { useAuth } from "@/hooks/use-auth";
 import { mockProblems } from "@/lib/mock-data"; // For available topics
 import Link from "next/link";
@@ -26,7 +27,17 @@ export default function RoadmapPage() {
   }
 
   if (!user) {
-    return <div className="text-center p-8">Please log in to view your personalized roadmap.</div>;
+    // This should ideally be handled by a ProtectedRoute or in useAuth redirect
+    return (
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] text-center p-4">
+            <Lock className="h-16 w-16 text-primary mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+            <p className="text-muted-foreground mb-4">Please log in to view your personalized learning roadmap.</p>
+            <Button asChild className="bg-accent hover:bg-accent/80">
+                <Link href="/auth/signin">Sign In</Link>
+            </Button>
+        </div>
+    );
   }
 
   const userProgress = user.progress?.topicMastery || {};
@@ -34,9 +45,9 @@ export default function RoadmapPage() {
   const getTopicStatus = (topic: string) => {
     const mastery = userProgress[topic];
     if (mastery) {
-      if (mastery.masteryLevel === "Expert" || mastery.masteryLevel === "Advanced") return { status: "mastered", icon: <Star className="h-6 w-6 text-yellow-400" />, color: "border-yellow-400 bg-yellow-400/10" };
-      if (mastery.masteryLevel === "Intermediate" || mastery.solved >= 2) return { status: "in-progress", icon: <Zap className="h-6 w-6 text-blue-400" />, color: "border-blue-400 bg-blue-400/10" };
-      if (mastery.solved >= 1) return { status: "started", icon: <ArrowRight className="h-6 w-6 text-green-400" />, color: "border-green-400 bg-green-400/10" };
+      if (mastery.masteryLevel === "Expert" || mastery.masteryLevel === "Advanced") return { status: "mastered", icon: <Star className="h-6 w-6 text-yellow-400 filter drop-shadow-[0_0_3px_currentColor]" />, color: "border-yellow-400 bg-yellow-400/10" };
+      if (mastery.masteryLevel === "Intermediate" || mastery.solved >= 2) return { status: "in-progress", icon: <Zap className="h-6 w-6 text-blue-400 filter drop-shadow-[0_0_3px_currentColor]" />, color: "border-blue-400 bg-blue-400/10" };
+      if (mastery.solved >= 1) return { status: "started", icon: <CheckCircle className="h-6 w-6 text-green-400 filter drop-shadow-[0_0_3px_currentColor]" />, color: "border-green-400 bg-green-400/10" };
     }
     return { status: "locked", icon: <Lock className="h-6 w-6 text-muted-foreground" />, color: "border-muted bg-muted/30" };
   };
@@ -49,11 +60,11 @@ export default function RoadmapPage() {
       .map(([topic]) => topic);
 
     const startedOrInProgressTopics = Object.entries(userProgress)
-      .filter(([,data]) => data.solved > 0 && !masteredTopics.includes(data.masteryLevel))
+      .filter(([,data]) => data.solved > 0 && !masteredTopics.includes(data.masteryLevel as string)) // Assuming masteryLevel is a string
       .map(([topic]) => topic);
 
     if (startedOrInProgressTopics.length > 0) {
-        recommendations.push(`Continue practicing in: ${startedOrInProgressTopics.slice(0,2).join(', ')}.`);
+        recommendations.push(`Continue honing your skills in: ${startedOrInProgressTopics.slice(0,2).join(', ')}.`);
     }
     
     const unattemptedTopics = allAvailableTopics.filter(topic => !userProgress[topic] || userProgress[topic]?.solved === 0);
@@ -64,8 +75,10 @@ export default function RoadmapPage() {
         if(nextToMaster) recommendations.push(`Focus on mastering: ${nextToMaster}.`);
     }
 
-    if (recommendations.length === 0) {
+    if (recommendations.length === 0 && allAvailableTopics.length > 0) {
       recommendations.push("You're making great progress! Explore advanced topics or try harder problems in mastered areas.");
+    } else if (allAvailableTopics.length === 0) {
+      recommendations.push("No topics available yet. Check back soon!");
     }
     return recommendations;
   };
@@ -78,7 +91,7 @@ export default function RoadmapPage() {
            <Image src="https://picsum.photos/seed/roadmap-banner/1200/300" alt="Futuristic Learning Path" width={1200} height={300} className="w-full h-auto object-cover opacity-60" data-ai-hint="abstract tech path" />
            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-8">
             <div className="flex items-center gap-3 mb-2">
-                <MapChart className="h-12 w-12 text-accent" />
+                <Map className="h-12 w-12 text-accent filter drop-shadow-[0_0_5px_hsl(var(--accent))]" />
                 <CardTitle className="text-4xl font-bold font-poppins text-white">Your Learning Roadmap</CardTitle>
             </div>
             <CardDescription className="text-lg text-slate-300">
@@ -137,11 +150,15 @@ export default function RoadmapPage() {
           <CardDescription>Based on your current progress, here are some tailored suggestions to guide your learning.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="list-disc list-inside space-y-2 text-muted-foreground pl-2">
-            {recommendations.map((rec, index) => (
-                <li key={index} className="text-md">{rec}</li>
-            ))}
-          </ul>
+          {recommendations.length > 0 ? (
+            <ul className="list-disc list-inside space-y-2 text-muted-foreground pl-2">
+              {recommendations.map((rec, index) => (
+                  <li key={index} className="text-md">{rec}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-md text-muted-foreground">Your roadmap is wide open! Pick any topic to begin your journey.</p>
+          )}
            <Button className="mt-6 bg-accent hover:bg-accent/80 text-accent-foreground rounded-lg neon-glow-accent" asChild>
                 <Link href="/practice">Explore All Problems</Link>
             </Button>
@@ -150,3 +167,4 @@ export default function RoadmapPage() {
     </div>
   );
 }
+
