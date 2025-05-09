@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Removed Card
 import { Bot, Edit3, Loader2 } from 'lucide-react';
 import type { SupportedLanguage } from '@/types';
 import { availableLanguages } from '@/lib/mock-data';
@@ -34,35 +34,38 @@ export default function CodeEditor({
   onAnalyze,
   isLoading,
   selectedProblemTitle,
-  editorHeight = "calc(100% - 150px)" // Default height, adjust as needed
+  editorHeight = "calc(100% - 70px)" 
 }: CodeEditorProps) {
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Tab') {
       event.preventDefault();
       const { selectionStart, selectionEnd, value } = event.currentTarget;
-      const newCode = value.substring(0, selectionStart) + '  ' + value.substring(selectionEnd);
+      // Basic tab insertion, might need more sophisticated handling for multi-line or existing selections
+      const tab = '  '; // two spaces for tab
+      const newCode = value.substring(0, selectionStart) + tab + value.substring(selectionEnd);
       setCode(newCode);
-      // Move cursor after inserted tabs
-      // This needs to be deferred to allow React to update the textarea's value
+      
       setTimeout(() => {
-        event.currentTarget.selectionStart = event.currentTarget.selectionEnd = selectionStart + 2;
+        if(event.currentTarget) { // Check if currentTarget is still available
+             event.currentTarget.selectionStart = event.currentTarget.selectionEnd = selectionStart + tab.length;
+        }
       }, 0);
     }
   };
 
   return (
-    <Card className="h-full flex flex-col shadow-lg rounded-lg overflow-hidden">
-      <CardHeader className="bg-card-foreground/5 p-4 border-b">
-        <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col overflow-hidden"> {/* Removed Card component for full height */}
+      <CardHeader className="bg-card-foreground/5 p-4 border-b rounded-t-2xl"> {/* Apply rounding here if this is the top */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <div className="flex items-center">
-            <Edit3 className="h-5 w-5 mr-2 text-accent" />
-            <CardTitle className="text-xl font-semibold text-foreground">
+            <Edit3 className="h-5 w-5 mr-2 text-primary shrink-0" />
+            <CardTitle className="text-lg sm:text-xl font-semibold text-foreground truncate">
               Code Editor {selectedProblemTitle ? `- ${selectedProblemTitle}` : ''}
             </CardTitle>
           </div>
           <Select value={language} onValueChange={(value) => setLanguage(value as SupportedLanguage)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px] rounded-lg">
               <SelectValue placeholder="Select Language" />
             </SelectTrigger>
             <SelectContent>
@@ -78,20 +81,24 @@ export default function CodeEditor({
           value={code}
           onChange={(e) => setCode(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Write your code here..."
-          className="code-editor-textarea flex-grow resize-none text-sm leading-relaxed"
+          placeholder={`// Start coding in ${language}...\n// ${selectedProblemTitle ? `Solution for ${selectedProblemTitle}` : 'Your awesome code here!'}`}
+          className="code-editor-textarea flex-grow resize-none text-sm leading-relaxed rounded-lg" // Added rounded-lg
           style={{ height: editorHeight }}
           aria-label="Code Input Area"
         />
-        <Button onClick={onAnalyze} disabled={isLoading || !code.trim()} className="mt-4 w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+        <Button 
+          onClick={onAnalyze} 
+          disabled={isLoading || !code.trim()} 
+          className="mt-4 w-full bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg py-3 text-base" // Added rounded-lg
+        >
           {isLoading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
           ) : (
-            <Bot className="mr-2 h-4 w-4" />
+            <Bot className="mr-2 h-5 w-5" />
           )}
-          Analyze Code
+          Analyze with AI
         </Button>
       </CardContent>
-    </Card>
+    </div>
   );
 }

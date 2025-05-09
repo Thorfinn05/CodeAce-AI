@@ -1,22 +1,31 @@
-import type {Metadata} from 'next';
-import {Geist, Geist_Mono} from 'next/font/google';
+import type { Metadata } from 'next';
+import { Geist_Sans as GeistSans, Geist_Mono as GeistMono } from 'next/font/google'; // Corrected import names
+import { JetBrains_Mono as JetBrainsMono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import AppProviders from '@/components/layout/AppProviders'; // To be created for client-side providers if needed
+import AppProviders from '@/components/layout/AppProviders';
+import AppHeader from '@/components/layout/Header'; // Renamed Header to AppHeader for clarity
+import AppFooter from '@/components/layout/Footer'; // New Footer component
 
-const geistSans = Geist({
+const geistSans = GeistSans({ // Corrected variable name
   variable: '--font-geist-sans',
   subsets: ['latin'],
 });
 
-const geistMono = Geist_Mono({
+const geistMono = GeistMono({ // Corrected variable name
   variable: '--font-geist-mono',
   subsets: ['latin'],
 });
 
+const jetbrainsMono = JetBrainsMono({
+  variable: '--font-jetbrains-mono',
+  subsets: ['latin'],
+  weight: ['400', '700'], // Include weights used by the code editor
+});
+
 export const metadata: Metadata = {
-  title: 'CodeAce - AI Programming Mentor',
-  description: 'Practice coding, get AI feedback, and track your progress with CodeAce.',
+  title: 'CodeCoach – AI-Powered Programming Mentor',
+  description: 'Write, test, and improve code with AI guidance. Track your programming progress and master new concepts with CodeCoach.',
 };
 
 export default function RootLayout({
@@ -26,9 +35,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${jetbrainsMono.variable} antialiased min-h-screen flex flex-col bg-background text-foreground`}>
         <AppProviders>
-          {children}
+          <AppHeader />
+          <main className="flex-grow container mx-auto px-4 py-6">
+            {children}
+          </main>
+          <AppFooter />
           <Toaster />
         </AppProviders>
       </body>

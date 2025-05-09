@@ -1,153 +1,161 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import Header from '@/components/layout/Header';
-import ProblemList from '@/components/problems/ProblemList';
-import ProblemDetails from '@/components/problems/ProblemDetails';
-import CodeEditor from '@/components/editor/CodeEditor';
-import AnalysisResult from '@/components/editor/AnalysisResult';
-import ProgressTracker from '@/components/tracking/ProgressTracker';
-import type { Problem, SupportedLanguage } from '@/types';
-import { mockProblems } from '@/lib/mock-data';
-import { analyzeCode, type AnalyzeCodeOutput } from '@/ai/flows/code-analysis';
-import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { CheckCircle, Code, Zap, TrendingUp, Users, MessageSquareQuote, Bot } from 'lucide-react';
+import Image from 'next/image';
 
-export default function Home() {
-  const { toast } = useToast();
+export default function LandingPage() {
+  const features = [
+    {
+      icon: <Bot className="h-8 w-8 text-accent" />,
+      title: "AI-Powered Feedback",
+      description: "Receive instant, intelligent feedback on your code's logic, style, and efficiency.",
+    },
+    {
+      icon: <Code className="h-8 w-8 text-accent" />,
+      title: "Interactive Code Editor",
+      description: "Practice in a rich code editor with support for multiple languages.",
+    },
+    {
+      icon: <TrendingUp className="h-8 w-8 text-accent" />,
+      title: "Personalized Roadmap",
+      description: "Visualize your learning journey and get recommendations on what to learn next.",
+    },
+    {
+      icon: <Zap className="h-8 w-8 text-accent" />,
+      title: "Adaptive Quizzes",
+      description: "Test your knowledge with quizzes that adapt to your skill level (Coming Soon).",
+    },
+  ];
 
-  const [allProblems] = useState<Problem[]>(mockProblems);
-  const [filteredProblems, setFilteredProblems] = useState<Problem[]>(mockProblems);
-  const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
-  
-  const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
-  const [topicFilter, setTopicFilter] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-
-  const [code, setCode] = useState<string>('');
-  const [language, setLanguage] = useState<SupportedLanguage>('python');
-  const [analysisResult, setAnalysisResult] = useState<AnalyzeCodeOutput['feedback'] | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
-
-  const topics = useMemo(() => Array.from(new Set(allProblems.map(p => p.topic))), [allProblems]);
-  const difficulties = useMemo(() => Array.from(new Set(allProblems.map(p => p.difficulty as string))), [allProblems]);
-
-
-  useEffect(() => {
-    let currentProblems = allProblems;
-
-    if (difficultyFilter !== 'all') {
-      currentProblems = currentProblems.filter(p => p.difficulty === difficultyFilter);
-    }
-    if (topicFilter !== 'all') {
-      currentProblems = currentProblems.filter(p => p.topic === topicFilter);
-    }
-    if (searchTerm.trim() !== '') {
-      currentProblems = currentProblems.filter(p => 
-        p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    setFilteredProblems(currentProblems);
-  }, [allProblems, difficultyFilter, topicFilter, searchTerm]);
-
-  const handleSelectProblem = (problem: Problem) => {
-    setSelectedProblem(problem);
-    setAnalysisResult(null); // Clear previous analysis
-    // Set default code for the selected language or empty string
-    const defaultCodeForProblem = problem.defaultCode?.[language] || '';
-    setCode(defaultCodeForProblem);
-  };
-
-  useEffect(() => {
-    if (selectedProblem) {
-      const defaultCodeForProblem = selectedProblem.defaultCode?.[language] || '';
-      setCode(defaultCodeForProblem);
-    }
-  }, [language, selectedProblem]);
-
-
-  const handleAnalyzeCode = async () => {
-    if (!code.trim()) {
-      toast({
-        title: 'Empty Code',
-        description: 'Please write some code to analyze.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    setIsAnalyzing(true);
-    setAnalysisResult(null);
-    try {
-      const result = await analyzeCode({ code, language });
-      setAnalysisResult(result.feedback);
-      toast({
-        title: 'Analysis Complete',
-        description: 'AI feedback has been generated.',
-      });
-    } catch (error) {
-      console.error('AI Analysis Error:', error);
-      setAnalysisResult('Error analyzing code. Please try again.');
-      toast({
-        title: 'Analysis Failed',
-        description: 'An error occurred while analyzing your code. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
+  const testimonials = [
+    {
+      name: "Alex P.",
+      role: "CS Student",
+      quote: "CodeCoach helped me understand data structures way faster than my textbooks!",
+      avatar: "https://picsum.photos/id/1005/100/100",
+      dataAiHint: "student person"
+    },
+    {
+      name: "Sarah L.",
+      role: "Aspiring Developer",
+      quote: "The AI feedback is like having a senior dev guide me. It's incredible for self-learners.",
+      avatar: "https://picsum.photos/id/1011/100/100",
+      dataAiHint: "developer woman"
+    },
+    {
+      name: "Mike B.",
+      role: "Hobbyist Coder",
+      quote: "I love the variety of problems and tracking my progress. Super motivating!",
+      avatar: "https://picsum.photos/id/1027/100/100",
+      dataAiHint: "coder man"
+    },
+  ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <Header />
-      <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
-        <ProgressTracker />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[calc(100vh-280px)]"> {/* Adjusted min-height */}
-          {/* Left Pane: Problems */}
-          <div className="flex flex-col gap-6 max-h-[calc(100vh-280px)]"> {/* Max height for scroll */}
-            <div className="flex-shrink-0 h-[60%] lg:h-[50%]"> {/* Problem List takes less space now */}
-               <ProblemList
-                problems={filteredProblems}
-                onSelectProblem={handleSelectProblem}
-                selectedProblemId={selectedProblem?.id}
-                difficultyFilter={difficultyFilter}
-                setDifficultyFilter={setDifficultyFilter}
-                topicFilter={topicFilter}
-                setTopicFilter={setTopicFilter}
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                topics={topics}
-                difficulties={difficulties}
-              />
-            </div>
-            <div className="flex-grow h-[40%] lg:h-[50%]"> {/* Problem Details takes more or equal space */}
-              <ProblemDetails problem={selectedProblem} />
-            </div>
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
+      {/* Hero Section */}
+      <section className="py-20 md:py-32 bg-gradient-to-br from-primary/10 via-background to-background">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-6 tracking-tight">
+            Master Coding with Your <span className="text-accent">AI Mentor</span>
+          </h1>
+          <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+            CodeCoach provides personalized guidance, intelligent feedback, and a structured path to help you become a proficient programmer.
+          </p>
+          <div className="space-x-4">
+            <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg" asChild>
+              <Link href="/practice">Try CodeCoach Free</Link>
+            </Button>
+            <Button size="lg" variant="outline" className="shadow-lg" asChild>
+              <Link href="/auth/signup">Sign Up Now</Link>
+            </Button>
           </div>
-
-          {/* Right Pane: Editor and Analysis */}
-          <div className="flex flex-col gap-6 max-h-[calc(100vh-280px)]"> {/* Max height for scroll */}
-            <div className="flex-grow"> {/* Code Editor takes most of the space */}
-               <CodeEditor
-                code={code}
-                setCode={setCode}
-                language={language}
-                setLanguage={setLanguage}
-                onAnalyze={handleAnalyzeCode}
-                isLoading={isAnalyzing}
-                selectedProblemTitle={selectedProblem?.title}
-                editorHeight="calc(100% - 60px)" // Adjust based on button height
-              />
-            </div>
-            <div className="flex-shrink-0"> {/* Analysis Result takes remaining space */}
-              <AnalysisResult result={analysisResult} isLoading={isAnalyzing} />
-            </div>
+           <div className="mt-16">
+            <Image 
+              src="https://picsum.photos/seed/codecoach-hero/1200/600" 
+              alt="Code Editor Interface" 
+              width={1000} 
+              height={500} 
+              className="rounded-xl shadow-2xl mx-auto"
+              data-ai-hint="code editor"
+              priority
+            />
           </div>
         </div>
-      </main>
-      <footer className="text-center py-4 border-t text-sm text-muted-foreground">
-        © {new Date().getFullYear()} CodeAce. All rights reserved.
-      </footer>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-16 md:py-24 bg-background">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Why CodeCoach?</h2>
+          <p className="text-muted-foreground text-center mb-12 max-w-xl mx-auto">
+            Unlock your coding potential with features designed for effective learning and rapid improvement.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className="shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-2xl">
+                <CardHeader className="items-center text-center">
+                  {feature.icon}
+                  <CardTitle className="mt-4 text-xl">{feature.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <p className="text-muted-foreground text-sm">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section id="testimonials" className="py-16 md:py-24 bg-secondary/50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Loved by Aspiring Coders</h2>
+           <p className="text-muted-foreground text-center mb-12 max-w-xl mx-auto">
+            Hear what our users say about their journey with CodeCoach.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <Card key={index} className="shadow-lg rounded-2xl flex flex-col">
+                <CardContent className="pt-6 flex-grow">
+                  <MessageSquareQuote className="h-8 w-8 text-accent mb-4" />
+                  <p className="text-muted-foreground mb-4 italic">"{testimonial.quote}"</p>
+                </CardContent>
+                <CardHeader className="flex flex-row items-center gap-4 pt-0">
+                  <Image 
+                    src={testimonial.avatar} 
+                    alt={testimonial.name} 
+                    width={48} 
+                    height={48} 
+                    className="rounded-full"
+                    data-ai-hint={testimonial.dataAiHint} 
+                  />
+                  <div>
+                    <CardTitle className="text-md">{testimonial.name}</CardTitle>
+                    <CardDescription className="text-xs">{testimonial.role}</CardDescription>
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 md:py-24 bg-primary text-primary-foreground">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Elevate Your Coding Skills?</h2>
+          <p className="text-lg text-primary-foreground/80 mb-10 max-w-xl mx-auto">
+            Join CodeCoach today and start your personalized journey to coding mastery.
+          </p>
+          <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg text-lg px-8 py-6" asChild>
+            <Link href="/auth/signup">Start Learning for Free</Link>
+          </Button>
+        </div>
+      </section>
     </div>
   );
 }
